@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
 
 jobs:
   backend:
@@ -23,15 +26,15 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Run Backend Formatter check
+      - name: Run backend formatter check
         run: uv run --frozen ruff format --check .
 
-      - name: Run Backend linter check
+      - name: Run backend linter check
         run: uv run --frozen ruff check .
 
       - name: Run backend tests
         run: uv run --frozen pytest
-    
+
   frontend:
     name: Frontend Checks
     runs-on: ubuntu-24.04
@@ -53,7 +56,7 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci
-      
+
       - name: Run frontend linter
         run: npm run lint
 
