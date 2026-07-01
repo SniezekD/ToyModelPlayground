@@ -12,7 +12,7 @@ jobs:
 
     defaults:
       run:
-        workflow_directory: backend
+        working-directory: backend
 
     steps:
       - name: Checkout repository
@@ -20,8 +20,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@8.1.0
-          with:
-            enable-cache: true
+        with:
+          enable-cache: true
 
       - name: Run Backend Formatter check
         run: uv run --frozen ruff format --check .
@@ -38,24 +38,24 @@ jobs:
 
     defaults:
       run:
-        workflow_directory: frontend
+        working-directory: frontend
 
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v6
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-        - name: Set up Node.js
-          uses: actions/setup-node@v6
-          with:
-            node-version: 24
-            cache: npm
-            cache-dependency-path: frontent/package-lock.json
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontent/package-lock.json
 
-        - name: Install frontend dependencies
-          run: npm ci
-        
-        - name: Run frontend linter
-          run: npm run lint
+      - name: Install frontend dependencies
+        run: npm ci
+      
+      - name: Run frontend linter
+        run: npm run lint
 
-        - name: Build frontend
-          run: npm run build
+      - name: Build frontend
+        run: npm run build
