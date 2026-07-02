@@ -13,12 +13,25 @@ section {
   margin-top: 2rem;
 }
 
+button {
+  cursor: pointer;
+  border: 1px solid #222;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 .model-list {
   display: grid;
   gap: 1rem;
 }
 
-.model-card {
+.model-card,
+.run-result {
   border: 1px solid #ddd;
   border-radius: 0.75 rem;
   padding: 1rem;
@@ -28,6 +41,7 @@ section {
   margin-top: 0;
 }
 
-.model-card ul {
+.model-card ul,
+.model-run ul {
   padding-left: 1.25rem;
 }
