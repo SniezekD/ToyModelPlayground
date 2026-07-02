@@ -102,7 +102,7 @@ function App () {
                   <p>{model.description}</p>
 
                   <h4>Parameters</h4>
-                  <u1>
+                  <ul>
                     {model.parameters.map((parameter) => (
                       <li key={parameter.name}>
                         <strong>{parameter.name}</strong>: default{" "}
@@ -110,7 +110,7 @@ function App () {
                         {parameter.maximum}
                       </li>
                     ))}
-                  </u1>
+                  </ul>
                 </article>    
               ))}
             </div>
