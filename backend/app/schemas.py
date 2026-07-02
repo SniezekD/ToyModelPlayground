@@ -16,3 +16,15 @@ class ModelInfo(BaseModel):
     name: str
     description: str
     parameters: list[ModelParameter]
+
+
+class RunCreateRequest(BaseModel):
+    model_id: str
+    parameters: dict[str, int]
+
+
+class RunInfo(BaseModel):
+    id: str
+    model_id: str
+    status: Literal["created"]
+    parameters: dict[str, int]

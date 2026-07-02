@@ -39,3 +39,11 @@ def list_models() -> list[ModelInfo]:
     Returns a list of all available models in the registry.
     """
     return MODEL_REGISTRY
+
+
+def get_model(model_id) -> ModelInfo | None:
+    for model in MODEL_REGISTRY:
+        if model.id == model_id:
+            return model
+
+    return None
