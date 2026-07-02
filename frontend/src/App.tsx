@@ -14,20 +14,42 @@ type ModelParameter = {
 };
 
 type ModelInfo = {
-  id: string
-  name: string
-  description: string
-  parameters: ModelParameter[]
+  id: string;
+  name: string;
+  description: string;
+  parameters: ModelParameter[];
 };
 
+type RunInfo = {
+  id: string;
+  model_id: string;
+  status: "created";
+  parameters: Record<string, number>;
+}
+
 type LoadState = "loading" | "ok" | "error";
+type RunCreationState = "idle" | "creating" | "created" | "error";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
+
+function buildDefaultParameters(model: ModelInfo): Record<string, number> {
+  return model.parameters.reduce<Record<string, number>>(
+    (parameters, parameter) => {
+      parameters[parameter.name] = parameter.default;
+      return parameters;
+    },
+    {},
+  );
+}
 
 function App () {
   const [backendStatus, setBackendStatus] = useState<LoadState>("loading");
   const [modelStatus, setModelStatus] = useState<LoadState>("loading");
   const [models, setModels] = useState<ModelInfo[]>([]);
+  const [runCreationStatus, setRuncreationStatus] = 
+    useState<RunCreationState>("idle");
+  const [createdRun, setCreatedRun] = useState<RunInfo | null>(null)
+  const [runCreationError, setRunCreationError] = useState<string | null>(null)
 
   useEffect(() => {
     async function checkBackendHealth() {
@@ -73,6 +95,38 @@ function App () {
 
   }, []);
 
+  async function createRun(model: ModelInfo) {
+    setRuncreationStatus("creating");
+    setCreatedRun(null);
+    setRunCreationError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/runs`, {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model_id: model.id,
+          parameters: buildDefaultParameters(model),
+        }),
+      });
+
+      if (!response.ok) {
+        setRuncreationStatus("error");
+        setRunCreationError(`Backend returned status ${response.status}.`);
+      }
+
+      const data: RunInfo = await response.json();
+
+      setCreatedRun(data);
+      setRuncreationStatus("created");
+    } catch {
+      setRuncreationStatus("error");
+      setRunCreationError("Could not  connect to backend.")
+    }
+  }
+
   return (
     <main>  
         <h1>Toy Model Playground</h1>
@@ -111,10 +165,50 @@ function App () {
                       </li>
                     ))}
                   </ul>
+                  <button
+                    disabled={runCreationStatus === "creating"}
+                    onClick={() => createRun(model)}
+                    type="button"
+                  >
+                    {runCreationStatus === "creating"
+                    ? "Creating run ..."
+                    : "Run with defaults"}
+                  </button>
                 </article>    
               ))}
             </div>
           )}
+        </section>
+
+        <section>
+          <h2>Latest run</h2>
+
+          {runCreationStatus === "idle" && <p>No run created yet.</p>}
+          {runCreationStatus === "creating" && <p>Creating run...</p>}
+          {runCreationStatus === "error" && (
+            <p>Run creation failed: {runCreationError}</p>
+          )}
+
+          {runCreationStatus === "created" &&  createdRun !== null && (
+            <div className="run-result">
+              <p>
+                Created run <strong>{createdRun.id}</strong>
+              </p>
+              <p>Status: {createdRun.status}</p>
+              <p>Model: {createdRun.model_id}</p>
+
+              <h3>Parameters used</h3>
+              <ul>
+                {Object.entries(createdRun.parameters).map(([name, value]) => (
+                  <li key={name}>
+                    <strong>{name}</strong>: {value}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          
+          )}
+            
         </section>
     </main>
   )
