@@ -29,23 +29,80 @@ type RunInfo = {
 
 type LoadState = "loading" | "ok" | "error";
 type RunCreationState = "idle" | "creating" | "created" | "error";
+type ParameterValues = Record<string, Record<string, string>>;
+
+type ParameterValidationResult = 
+  | {
+      parameters: Record<string, number>;
+      error: null;
+    }
+  | {
+      parameters: null;
+      error: string;
+    };  
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
-function buildDefaultParameters(model: ModelInfo): Record<string, number> {
-  return model.parameters.reduce<Record<string, number>>(
-    (parameters, parameter) => {
-      parameters[parameter.name] = parameter.default;
-      return parameters;
-    },
-    {},
-  );
+function buildInitialParameterValues(models: ModelInfo[]): ParameterValues {
+  const values: ParameterValues = {};
+
+  for (const model of models) {
+    values[model.id] = {};
+
+    for (const param of model.parameters) {
+      values[model.id][param.name] = String(param.default);
+    }
+  }
+
+  return values;
+}
+
+function validateParameterValues(
+  model: ModelInfo,
+  values: Record<string, string>,
+): ParameterValidationResult {
+  const params: Record<string, number> = {};
+
+  for (const param of model.parameters) {
+    const rawValue = values[param.name];
+
+    if (rawValue === undefined || rawValue.trim() === "") {
+      return {
+        parameters: null,
+        error: `Parameter "${param.name}" is required.`,
+      };
+    }
+
+    const value = Number(rawValue);
+
+    if (!Number.isInteger(value)) {
+      return {
+        parameters: null,
+        error: `Parameter "${param.name}" must be an integer.`
+      };
+    }
+
+    if (value < param.minimum || value > param.maximum) {
+      return {
+        parameters: null,
+        error: `Parameter "${param.name}" must be between ${param.minimum} and ${param.maximum}.`
+      };
+    }
+
+    params[param.name] = value;
+  }
+
+  return {
+    parameters: params,
+    error: null,
+  };
 }
 
 function App () {
   const [backendStatus, setBackendStatus] = useState<LoadState>("loading");
   const [modelStatus, setModelStatus] = useState<LoadState>("loading");
   const [models, setModels] = useState<ModelInfo[]>([]);
+  const [parameterValues, setParameterValues] = useState<ParameterValues>({});
   const [runCreationStatus, setRuncreationStatus] = 
     useState<RunCreationState>("idle");
   const [createdRun, setCreatedRun] = useState<RunInfo | null>(null)
@@ -85,6 +142,7 @@ function App () {
         const data: ModelInfo[] = await response.json();
 
         setModels(data);
+        setParameterValues(buildInitialParameterValues(data));
         setModelStatus("ok");
       } catch {
         setModelStatus("error");
@@ -95,10 +153,35 @@ function App () {
 
   }, []);
 
+  function updateParameterValue(
+    modelId: string,
+    parameterName: string,
+    value: string,
+  ) {
+    setParameterValues((currentValues) => ({
+      ...currentValues,
+      [modelId]: {
+        ...currentValues[modelId],
+        [parameterName]: value,
+      },
+    }));
+  }
+
   async function createRun(model: ModelInfo) {
     setRuncreationStatus("creating");
     setCreatedRun(null);
     setRunCreationError(null);
+
+    const validation = validateParameterValues(
+      model,
+      parameterValues [model.id] ?? {},
+    );
+
+    if (validation.error !== null) {
+      setRuncreationStatus("error");
+      setRunCreationError(validation.error);
+      return;
+    }
 
     try {
       const response = await fetch(`${API_BASE_URL}/runs`, {
@@ -108,7 +191,7 @@ function App () {
         },
         body: JSON.stringify({
           model_id: model.id,
-          parameters: buildDefaultParameters(model),
+          parameters: validation.parameters,
         }),
       });
 
@@ -137,6 +220,7 @@ function App () {
 
         <section>
           <h2>System Status</h2>
+
           {backendStatus === "loading" && <p>Checking backend...</p>}
           {backendStatus === "ok" && <p>Backend Status: ok</p>}
           {backendStatus === "error" && <p>Backend Status: unavailable</p>}
@@ -156,15 +240,34 @@ function App () {
                   <p>{model.description}</p>
 
                   <h4>Parameters</h4>
-                  <ul>
+
+                  <div className="parameter-list">
                     {model.parameters.map((parameter) => (
-                      <li key={parameter.name}>
-                        <strong>{parameter.name}</strong>: default{" "}
-                        {parameter.default}, renge {parameter.minimum}-
-                        {parameter.maximum}
-                      </li>
+                      <label className="parameter-field" key={parameter.name}>
+                        <span>
+                          {parameter.name} ({parameter.minimum}-{parameter.maximum})
+                        </span>
+
+                        <input
+                          max={parameter.maximum}
+                          min={parameter.minimum}
+                          onChange={(event) => 
+                            updateParameterValue(
+                              model.id,
+                              parameter.name,
+                              event.target.value,
+                            )
+                          }
+                          step="1"
+                          type="number"
+                          value={
+                            parameterValues[model.id]?.[parameter.name] ??
+                            String(parameter.default)
+                          }/>
+                      </label>
                     ))}
-                  </ul>
+                  </div>
+                  
                   <button
                     disabled={runCreationStatus === "creating"}
                     onClick={() => createRun(model)}
@@ -172,7 +275,7 @@ function App () {
                   >
                     {runCreationStatus === "creating"
                     ? "Creating run ..."
-                    : "Run with defaults"}
+                    : "Run model"}
                   </button>
                 </article>    
               ))}
