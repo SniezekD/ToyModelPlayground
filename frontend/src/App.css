@@ -25,6 +25,13 @@ button:disabled {
   cursor: not-allowed;
 }
 
+input:disabled {
+  border: 1px solid #bbb;
+  border-radius: 0.5rem;
+  padding: 0.4 rem 0.5 rem;
+  font: inherit;
+}
+
 .model-list {
   display: grid;
   gap: 1rem;
@@ -39,6 +46,17 @@ button:disabled {
 
 .model-card h3 {
   margin-top: 0;
+}
+
+.parameter-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.parameter-field {
+  display: grip;
+  gap: 0.25rem;
 }
 
 .model-card ul,
