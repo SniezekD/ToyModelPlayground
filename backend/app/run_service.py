@@ -3,7 +3,7 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from app.model_registry import get_model
-from app.schemas import ModelInfo, RunCreateRequest, RunInfo
+from app.schemas import ModelInfo, RunCreateRequest, RunInfo, RunResult
 
 RUNS: dict[str, RunInfo] = {}
 
@@ -27,11 +27,11 @@ def create_run(request: RunCreateRequest) -> RunInfo:
 
     RUNS[run.id] = run
 
-    return run
+    return complete_run(run)
 
 
 def get_run(run_id: str) -> RunInfo:
-    run = RUNS[run_id]
+    run = RUNS.get(run_id)
 
     if run is None:
         raise HTTPException(
@@ -40,6 +40,30 @@ def get_run(run_id: str) -> RunInfo:
         )
 
     return run
+
+
+def complete_run(run: RunInfo) -> RunInfo:
+    result = RunResult(
+        summary=(
+            "Fake execution completed for a "
+            f"{run.parameters['width']}x{run.parameters['height']} grid "
+            f"over {run.parameters['steps']} steps."
+        ),
+        grid_height=run.parameters["height"],
+        grid_width=run.parameters["width"],
+        steps_completed=run.parameters["steps"],
+    )
+
+    completed_run = run.model_copy(
+        update={
+            "status": "completed",
+            "result": result,
+        }
+    )
+
+    RUNS[completed_run.id] = completed_run
+
+    return completed_run
 
 
 def validate_parameters(
