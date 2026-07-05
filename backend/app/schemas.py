@@ -23,8 +23,16 @@ class RunCreateRequest(BaseModel):
     parameters: dict[str, int]
 
 
+class RunResult(BaseModel):
+    summary: str
+    grid_width: int
+    grid_height: int
+    steps_completed: int
+
+
 class RunInfo(BaseModel):
     id: str
     model_id: str
-    status: Literal["created"]
+    status: Literal["created", "completed"]
     parameters: dict[str, int]
+    result: RunResult | None = None

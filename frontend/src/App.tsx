@@ -20,12 +20,20 @@ type ModelInfo = {
   parameters: ModelParameter[];
 };
 
+type RunResult = {
+  summary: string;
+  grid_width: number;
+  grid_height: number;
+  steps_completed: number;
+};
+
 type RunInfo = {
   id: string;
   model_id: string;
-  status: "created";
+  status: "created" | "completed";
   parameters: Record<string, number>;
-}
+  result: RunResult | null;
+};
 
 type LoadState = "loading" | "ok" | "error";
 type RunCreationState = "idle" | "creating" | "created" | "error";
@@ -308,6 +316,18 @@ function App () {
                   </li>
                 ))}
               </ul>
+
+              {createdRun.result !== null && (
+                <>
+                  <h3>Result</h3>
+                  <p>{createdRun.result.summary}</p>
+                  <ul>
+                    <li>Grid width: {createdRun.result.grid_width}</li>
+                    <li>Grid height: {createdRun.result.grid_height}</li>
+                    <li>Steps completed: {createdRun.result.steps_completed}</li>
+                  </ul>
+                </>
+              )}
             </div>
           
           )}

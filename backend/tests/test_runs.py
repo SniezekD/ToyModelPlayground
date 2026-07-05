@@ -23,15 +23,21 @@ def test_create_run_for_game_of_life() -> None:
     run = response.json()
     assert isinstance(run["id"], str)
     assert run["model_id"] == "game-of-life"
-    assert run["status"] == "created"
+    assert run["status"] == "completed"
     assert run["parameters"] == {
         "height": 30,
         "width": 30,
         "steps": 50,
     }
+    assert run["result"] == {
+        "summary": "Fake execution completed for a 30x30 grid over 50 steps.",
+        "grid_width": 30,
+        "grid_height": 30,
+        "steps_completed": 50,
+    }
 
 
-def test_created_run_can_be_retvived() -> None:
+def test_created_run_can_be_retvieved() -> None:
     create_response = client.post(
         "/runs",
         json={
@@ -50,6 +56,14 @@ def test_created_run_can_be_retvived() -> None:
 
     assert get_response.status_code == 200
     assert get_response.json()["id"] == run_id
+    assert get_response.json()["status"] == "completed"
+
+
+def test_get_run_rejects_unknown_run() -> None:
+    response = client.get("/runs/unknown-run")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Unknown run: unknown-run"}
 
 
 def test_create_run_rejects_unknown_model() -> None:
