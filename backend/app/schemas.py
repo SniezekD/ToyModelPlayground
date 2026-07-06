@@ -28,6 +28,8 @@ class RunResult(BaseModel):
     grid_width: int
     grid_height: int
     steps_completed: int
+    alive_cells: int
+    final_grid: list[list[int]]
 
 
 class RunInfo(BaseModel):
