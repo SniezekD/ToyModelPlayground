@@ -25,6 +25,8 @@ type RunResult = {
   grid_width: number;
   grid_height: number;
   steps_completed: number;
+  alive_cells: number;
+  final_grid: number[][];
 };
 
 type RunInfo = {
@@ -325,6 +327,7 @@ function App () {
                     <li>Grid width: {createdRun.result.grid_width}</li>
                     <li>Grid height: {createdRun.result.grid_height}</li>
                     <li>Steps completed: {createdRun.result.steps_completed}</li>
+                    <li>Living cells remaining: {createdRun.result.alive_cells}</li>
                   </ul>
                 </>
               )}

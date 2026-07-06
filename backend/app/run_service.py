@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
+from app.game_of_life import count_alive_cells, run_game_of_life
 from app.model_registry import get_model
 from app.schemas import ModelInfo, RunCreateRequest, RunInfo, RunResult
 
@@ -43,15 +44,25 @@ def get_run(run_id: str) -> RunInfo:
 
 
 def complete_run(run: RunInfo) -> RunInfo:
+    final_grid = run_game_of_life(
+        width=run.parameters["width"],
+        height=run.parameters["height"],
+        steps=run.parameters["steps"],
+    )
+    alive_cells = count_alive_cells(final_grid)
+
     result = RunResult(
         summary=(
-            "Fake execution completed for a "
+            "Game Of Life completed for a "
             f"{run.parameters['width']}x{run.parameters['height']} grid "
-            f"over {run.parameters['steps']} steps."
+            f"over {run.parameters['steps']} steps with "
+            f"{alive_cells} living cells remaining."
         ),
         grid_height=run.parameters["height"],
         grid_width=run.parameters["width"],
         steps_completed=run.parameters["steps"],
+        final_grid=final_grid,
+        alive_cells=alive_cells,
     )
 
     completed_run = run.model_copy(

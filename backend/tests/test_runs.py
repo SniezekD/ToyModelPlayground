@@ -29,12 +29,19 @@ def test_create_run_for_game_of_life() -> None:
         "width": 30,
         "steps": 50,
     }
-    assert run["result"] == {
-        "summary": "Fake execution completed for a 30x30 grid over 50 steps.",
-        "grid_width": 30,
-        "grid_height": 30,
-        "steps_completed": 50,
-    }
+
+    result = run["result"]
+
+    assert result["summary"] == (
+        "Game Of Life completed for a 30x30 grid over 50 "
+        "steps with 3 living cells remaining."
+    )
+    assert result["grid_width"] == 30
+    assert result["grid_height"] == 30
+    assert result["steps_completed"] == 50
+    assert result["alive_cells"] == 3
+    assert len(result["final_grid"]) == 30
+    assert len(result["final_grid"][0]) == 30
 
 
 def test_created_run_can_be_retvieved() -> None:
